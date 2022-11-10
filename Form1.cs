@@ -109,7 +109,13 @@ namespace LANHelper
                             break;
                         case "GET":
                             {
-                                getData = request.QueryString[0];
+                                try
+                                {
+                                    getData = request.QueryString[0];
+                                }catch (Exception)
+                                {
+                                    getData = "";
+                                }
                             }
                             break;
                     }
@@ -136,7 +142,9 @@ namespace LANHelper
                             SetSuspendState(false, true, true);
                             ret = getData;
                             break;
-
+                        default:
+                            ret= File.ReadAllText(AppDomain.CurrentDomain.BaseDirectory+"index.html");
+                            break;
                     }
                     HttpListenerResponse response = context.Response;
                     response.StatusCode = 200;
