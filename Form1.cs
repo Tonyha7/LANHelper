@@ -1,13 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
 using System.IO;
-using System.Linq;
 using System.Net;
 using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
@@ -59,7 +54,7 @@ namespace LANHelper
         public void startHttpListen(String port)
         {
             listener = new HttpListener();
-            listener.Prefixes.Add("http://*:" + port + "/th7/");
+            listener.Prefixes.Add("http://*:" + port + "/lh/");
             //listener.Prefixes.Add("http://127.0.0.1:"+port+"/th7/");
             listener.Start();
             listener.BeginGetContext(ListenerHandle, listener);
@@ -169,19 +164,21 @@ namespace LANHelper
 
         private void button1_Click(object sender, EventArgs e)
         {
-            String s = textBox1.Text;
-            if (IsInt(s))
+            String port = textBox1.Text;
+            if (IsInt(port))
             {
                 if (listener != null)
                 {
                     MessageBox.Show("已在运行");
                     return;
                 }
-                RunCommand("netsh http delete urlacl url = http://*:" + s + "/\n" +
-                    "netsh http add urlacl url=http://*:" + s + "/ user=Everyone\n" +
-                    "netsh advfirewall firewall add rule name=LANHelper dir=in action=allow protocol=TCP localport=" + s+ "\n" +
-                    "netsh advfirewall firewall add rule name=LANHelper dir=out action=allow protocol=TCP localport=" + s);
-                startHttpListen(s);
+                RunCommand("netsh http delete urlacl url = http://*:" + port + "/" + Environment.NewLine +
+                    "netsh http add urlacl url=http://*:" + port + "/ user=Everyone" + Environment.NewLine +
+                    "netsh advfirewall firewall add rule name=LANHelper dir=in action=allow protocol=TCP localport=" + port + Environment.NewLine +
+                    "netsh advfirewall firewall add rule name=LANHelper dir=out action=allow protocol=TCP localport=" + port);
+                startHttpListen(port);
+                List<string> list = GetLocalIpAddress(port);
+                textBox2.Text = string.Join(Environment.NewLine, list.ToArray());
             }
             else
             {
@@ -193,9 +190,22 @@ namespace LANHelper
         private void button2_Click(object sender, EventArgs e)
         {
             String s = textBox1.Text;
-            RunCommand("netsh http delete urlacl url = http://*:" + s + "/\n" +
+            RunCommand("netsh http delete urlacl url = http://*:" + s + "/" + Environment.NewLine +
                     "netsh advfirewall firewall delete rule name=\"LANHelper\"");
             this.Close();
+        }
+
+        public static List<string> GetLocalIpAddress(String port)
+        {
+            string hostName = Dns.GetHostName();
+            IPAddress[] addresses = Dns.GetHostAddresses(hostName);
+
+            List<string> IPList = new List<string>();
+            for (int i = 0; i < addresses.Length; i++)
+            {
+               IPList.Add("http://"+addresses[i].ToString() + ":" + port+"/lh/");
+            }
+            return IPList;
         }
 
         private void Form1_MouseDown(object sender, MouseEventArgs e)
